@@ -221,11 +221,11 @@
         </div>
     </footer>
     
-    <div id="case-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop modal-hidden" onclick="closeCaseModal()">
-        <div class="card w-full max-w-2xl modal-content" onclick="event.stopPropagation()">
+    <div id="case-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop modal-hidden">
+        <div class="card w-full max-w-2xl modal-content">
             <div class="flex justify-between items-center p-4 border-b">
                 <h3 id="modal-client-name" class="text-xl font-bold"></h3>
-                <button onclick="closeCaseModal()" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+                <button id="modal-close-btn" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
             </div>
             <div id="modal-body" class="p-6 space-y-4 overflow-y-auto" style="max-height: 70vh;">
             </div>
@@ -234,88 +234,91 @@
 
 
 <script>
-const caseData = [
-    {
-        rep: '최민',
-        client: '네패스 & 네패스아크',
-        industry: '반도체',
-        painPoints: ['비용', '서비스/기능'],
-        switchReason: '1. 당시 문서 다운로드 불가<br>2. 갱신 기간 중 계정 차단<br>3. 비용에 대한 신뢰를 잃음 (2배 이상 가격으로 갱신 제안)',
-        successPoint: '1. 회사 신뢰성<br>2. 일정한 비용 유지<br>3. 신속한 기술지원',
-        outcome: '초기 2,000건 도입 이후 3,000건씩 매년 갱신(총 11,000건).<br>네패스아크 별도 계약.'
-    },
-    {
-        rep: '김다민',
-        client: '코오롱모터스',
-        industry: '자동차',
-        painPoints: ['비용'],
-        switchReason: '<b>[비용 측면]</b><br>1. API 연동 비용 비교 (연간 약 200만원)<br>2. 건단가 (1,200원 제안 받음)<br><br><b>[API 연동 측면]</b><br>1. 연동 방법의 유사성',
-        successPoint: '1. 비용 절감 효과<br>2. 기능 구현에 대한 확신<br>3. 적극적인 전환 지원 약속',
-        outcome: '신차 계약 관련 2만 건 도입 예정 (총 6.3백만원, 건당 350원).<br>그룹사 내 3개 계열사로 확대 예정.'
-    },
-    {
-        rep: '박진희',
-        client: '한국취약노인지원재단 외 3개사',
-        industry: '비영리/IT',
-        painPoints: ['비용', '서비스/기능'],
-        switchReason: '1. 비용 측면 (API 무상 제공)<br>2. 서비스 불안정<br>3. 기능 (입력규칙, 주소 검색 기능 부재)',
-        successPoint: '1. 비용 절감 (타사 견적 시 단가 할인)<br>2. 문서 사용 기한 없음<br>3. CSV 추출 기능 제공<br>4. 충전형 요금제',
-        outcome: '한국취약노인지원재단: 총 4회 계약 진행.<br>서울시사회복지사협회: 총 2회 계약 진행.'
-    },
-    {
-        rep: '박사랑',
-        client: 'Homecheck 홈체크',
-        industry: '부동산/대행',
-        painPoints: ['비용'],
-        switchReason: '모두싸인 갱신 계약 (단가 1,900원) 금액 부담.<br>모두싸인 최종 단가 720원까지 하락.',
-        successPoint: '- 합리적인 비용 제안<br>- 업체 변경 시 불편함 없게 지원 (교육, 매뉴얼, 템플릿 세팅)<br>- 포시에스 30년 업력 어필',
-        outcome: '10,000건 도입: 450만원 (단가 450원).<br>월 500건 이상 활발히 사용 중. 확장 가능성 높음.'
-    },
-    {
-        rep: '허아영',
-        client: '인트론바이오 외 18개사',
-        industry: '기타 복합',
-        painPoints: ['비용', '지원'],
-        switchReason: '1. 영업자의 적극 지원<br>2. API 무료 제공<br>3. 모두싸인 단가',
-        successPoint: '1. 회사의 안정성<br>2. 비용 측면 (문서별 단가, API 무료)<br>3. 다양한 기능 제공 (CSV)<br>4. 영업자의 빠른 지원',
-        outcome: '다양한 산업군의 다수 고객사 성공적으로 유치.'
-    }
-];
-
-const playbookData = [
-    {
-        step: 1,
-        title: "고객 진단: '비용'으로 시작하라",
-        icon: '🔍',
-        content: `상담 초기, 아래 질문으로 고객의 가장 큰 고통인 '비용' 문제를 정확히 진단합니다.<ul class='list-disc list-inside mt-2'><li>API 연동 비용은 없으셨나요?</li><li>갱신 비용은 어느 정도로 예상하세요?</li><li>멤버/템플릿 추가 시 비용이 발생하나요?</li></ul>`
-    },
-    {
-        step: 2,
-        title: "해결책 제시: 우리의 3대 승리 공식",
-        icon: '💡',
-        content: `진단이 끝났다면, 우리의 3가지 핵심 강점을 제시합니다.<ul class='list-disc list-inside mt-2'><li><b>압도적 비용 절감:</b> 무료 API, 유연한 충전형 요금제</li><li><b>안정성과 신뢰:</b> 포시에스 30년 업력, 코스닥 상장</li><li><b>적극적 지원:</b> 전환 과정 책임 지원, 성공적인 온보딩 약속</li></ul>`
-    },
-    {
-        step: 3,
-        title: "상황 주도: 반론을 기회로",
-        icon: '💬',
-        content: `고객의 예상 반론을 우리가 유리한 방향으로 이끄는 기회로 활용합니다.<ul class='list-disc list-inside mt-2'><li><b>"UI가 더 직관적이다"</b> → 공감 후 '진짜 편의성'(안정성, 지원) 강조</li><li><b>"고객사가 더 많다"</b> → 공감 후 '장기적 안정성'(업력, 재무 건전성) 강조</li></ul>`
-    }
-];
-
 document.addEventListener('DOMContentLoaded', () => {
+
+    const caseData = [
+        {
+            rep: '최민',
+            client: '네패스 & 네패스아크',
+            industry: '반도체',
+            painPoints: ['비용', '서비스/기능'],
+            switchReason: '1. 당시 문서 다운로드 불가<br>2. 갱신 기간 중 계정 차단<br>3. 비용에 대한 신뢰를 잃음 (2배 이상 가격으로 갱신 제안)',
+            successPoint: '1. 회사 신뢰성<br>2. 일정한 비용 유지<br>3. 신속한 기술지원',
+            outcome: '초기 2,000건 도입 이후 3,000건씩 매년 갱신(총 11,000건).<br>네패스아크 별도 계약.'
+        },
+        {
+            rep: '김다민',
+            client: '코오롱모터스',
+            industry: '자동차',
+            painPoints: ['비용'],
+            switchReason: '<b>[비용 측면]</b><br>1. API 연동 비용 비교 (연간 약 200만원)<br>2. 건단가 (1,200원 제안 받음)<br><br><b>[API 연동 측면]</b><br>1. 연동 방법의 유사성',
+            successPoint: '1. 비용 절감 효과<br>2. 기능 구현에 대한 확신<br>3. 적극적인 전환 지원 약속',
+            outcome: '신차 계약 관련 2만 건 도입 예정 (총 6.3백만원, 건당 350원).<br>그룹사 내 3개 계열사로 확대 예정.'
+        },
+        {
+            rep: '박진희',
+            client: '한국취약노인지원재단 외 3개사',
+            industry: '비영리/IT',
+            painPoints: ['비용', '서비스/기능'],
+            fullClientList: '한국취약노인지원재단<br>서울시사회복지사협회<br>청각장애인생애지원센터<br>주식회사 메타크래프트',
+            switchReason: '1. 비용 측면 (API 무상 제공)<br>2. 서비스 불안정<br>3. 기능 (입력규칙, 주소 검색 기능 부재)',
+            successPoint: '1. 비용 절감 (타사 견적 시 단가 할인)<br>2. 문서 사용 기한 없음<br>3. CSV 추출 기능 제공<br>4. 충전형 요금제',
+            outcome: '한국취약노인지원재단: 총 4회 계약 진행.<br>서울시사회복지사협회: 총 2회 계약 진행.'
+        },
+        {
+            rep: '박사랑',
+            client: 'Homecheck 홈체크',
+            industry: '부동산/대행',
+            painPoints: ['비용'],
+            switchReason: '모두싸인 갱신 계약 (단가 1,900원) 금액 부담.<br>모두싸인 최종 단가 720원까지 하락.',
+            successPoint: '- 합리적인 비용 제안<br>- 업체 변경 시 불편함 없게 지원 (교육, 매뉴얼, 템플릿 세팅)<br>- 포시에스 30년 업력 어필',
+            outcome: '10,000건 도입: 450만원 (단가 450원).<br>월 500건 이상 활발히 사용 중. 확장 가능성 높음.'
+        },
+        {
+            rep: '허아영',
+            client: '인트론바이오 외 18개사',
+            industry: '기타 복합',
+            painPoints: ['비용', '지원'],
+            fullClientList: '굿맘굿베이비 인천점, (주)컬쳐렉스, ((A+))행복맘스, 주식회사 댄스팜코퍼레이션, (주)위마스터즈, 법률사무소든든, 미디어서울(정진수), (주)인트론바이오, 자동차와사람, 주식회사 판디아메디텍, 주식회사 우아한 민주, 주식회사 굿맨잡, (주)그렙, 에이스토리, 리클린, (주)캉카스백화점, 지비피에스, 에이프로젠, 잡플래닛',
+            switchReason: '1. 영업자의 적극 지원<br>2. API 무료 제공<br>3. 모두싸인 단가',
+            successPoint: '1. 회사의 안정성<br>2. 비용 측면 (문서별 단가, API 무료)<br>3. 다양한 기능 제공 (CSV)<br>4. 영업자의 빠른 지원',
+            outcome: '다양한 산업군의 다수 고객사 성공적으로 유치.'
+        }
+    ];
+
+    const playbookData = [
+        {
+            step: 1,
+            title: "고객 진단: '비용'으로 시작하라",
+            icon: '🔍',
+            content: `상담 초기, 아래 질문으로 고객의 가장 큰 고통인 '비용' 문제를 정확히 진단합니다.<ul class='list-disc list-inside mt-2'><li>API 연동 비용은 없으셨나요?</li><li>갱신 비용은 어느 정도로 예상하세요?</li><li>멤버/템플릿 추가 시 비용이 발생하나요?</li></ul>`
+        },
+        {
+            step: 2,
+            title: "해결책 제시: 우리의 3대 승리 공식",
+            icon: '💡',
+            content: `진단이 끝났다면, 우리의 3가지 핵심 강점을 제시합니다.<ul class='list-disc list-inside mt-2'><li><b>압도적 비용 절감:</b> 무료 API, 유연한 충전형 요금제</li><li><b>안정성과 신뢰:</b> 포시에스 30년 업력, 코스닥 상장</li><li><b>적극적 지원:</b> 전환 과정 책임 지원, 성공적인 온보딩 약속</li></ul>`
+        },
+        {
+            step: 3,
+            title: "상황 주도: 반론을 기회로",
+            icon: '💬',
+            content: `고객의 예상 반론을 우리가 유리한 방향으로 이끄는 기회로 활용합니다.<ul class='list-disc list-inside mt-2'><li><b>"UI가 더 직관적이다"</b> → 공감 후 '진짜 편의성'(안정성, 지원) 강조</li><li><b>"고객사가 더 많다"</b> → 공감 후 '장기적 안정성'(업력, 재무 건전성) 강조</li></ul>`
+        }
+    ];
+
     const playbookContainer = document.getElementById('playbook-container');
     const costCasesContainer = document.getElementById('cost-cases');
     const featureCasesContainer = document.getElementById('feature-cases');
     const supportCasesContainer = document.getElementById('support-cases');
+    const casesSection = document.getElementById('cases');
     const modal = document.getElementById('case-modal');
-    const modalContent = modal.querySelector('.modal-content');
     const modalClientName = document.getElementById('modal-client-name');
     const modalBody = document.getElementById('modal-body');
 
     function renderPlaybook() {
         playbookContainer.innerHTML = playbookData.map(item => `
-            <div class="card p-6 cursor-pointer" onclick="togglePlaybook(this)">
+            <div class="card p-6 cursor-pointer playbook-card">
                 <div class="flex items-center justify-between">
                      <h3 class="text-xl font-bold">${item.step}. ${item.title}</h3>
                      <div class="flex items-center">
@@ -329,40 +332,47 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
     }
-
-    window.togglePlaybook = function(element) {
-        const content = element.querySelector('.playbook-content');
-        const arrow = element.querySelector('.arrow-icon');
-        content.classList.toggle('hidden');
-        arrow.classList.toggle('rotated');
-    }
+    
+    const createCaseCardHTML = (caseItem, originalIndex) => `
+        <div class="card flex flex-col p-5 h-full cursor-pointer case-card" data-index="${originalIndex}">
+            <h4 class="text-md font-bold text-blue-600 truncate">${caseItem.client}</h4>
+            <p class="text-sm text-gray-500 mb-3">${caseItem.industry}</p>
+            <div class="flex-grow text-xs text-gray-600">
+                <p class="mb-1"><strong class="text-red-500">주요 문제:</strong> ${caseItem.painPoints.join(', ')}</p>
+                <p><strong class="text-green-600">성공 키워드:</strong> ${caseItem.successPoint.split('<br>')[0].replace(/^-|^\d+\.\s*/, '')}</p>
+            </div>
+             <div class="mt-4 pt-3 border-t border-gray-100 text-right">
+                <span class="text-blue-600 font-semibold text-sm">상세 보기 &rarr;</span>
+            </div>
+        </div>
+    `;
 
     function renderCases() {
-        caseData.forEach((c, index) => {
-            const caseCardHTML = `
-                <div class="card flex flex-col p-5 h-full cursor-pointer" onclick="openCaseModal(${index})">
-                    <h4 class="text-md font-bold text-blue-600 truncate">${c.client}</h4>
-                    <p class="text-sm text-gray-500 mb-3">${c.industry}</p>
-                    <div class="flex-grow text-xs text-gray-600">
-                        <p class="mb-1"><strong class="text-red-500">주요 문제:</strong> ${c.painPoints.join(', ')}</p>
-                        <p><strong class="text-green-600">성공 키워드:</strong> ${c.successPoint.split('<br>')[0].replace(/^-|^\d+\.\s*/, '')}</p>
-                    </div>
-                     <div class="mt-4 pt-3 border-t border-gray-100 text-right">
-                        <span class="text-blue-600 font-semibold text-sm">상세 보기 &rarr;</span>
-                    </div>
-                </div>
-            `;
+        const costCases = caseData.filter(c => c.painPoints.includes('비용'));
+        const featureCases = caseData.filter(c => c.painPoints.includes('서비스/기능'));
+        const supportCases = caseData.filter(c => c.painPoints.includes('지원'));
 
-            if (c.painPoints.includes('비용')) costCasesContainer.innerHTML += caseCardHTML;
-            if (c.painPoints.includes('서비스/기능')) featureCasesContainer.innerHTML += caseCardHTML;
-            if (c.painPoints.includes('지원')) supportCasesContainer.innerHTML += caseCardHTML;
-        });
+        costCasesContainer.innerHTML = costCases.map(c => createCaseCardHTML(c, caseData.indexOf(c))).join('');
+        featureCasesContainer.innerHTML = featureCases.map(c => createCaseCardHTML(c, caseData.indexOf(c))).join('');
+        supportCasesContainer.innerHTML = supportCases.map(c => createCaseCardHTML(c, caseData.indexOf(c))).join('');
     }
 
-    window.openCaseModal = function(index) {
+    function openCaseModal(index) {
         const c = caseData[index];
         modalClientName.textContent = c.client;
+
+        let fullClientListHTML = '';
+        if (c.fullClientList) {
+            fullClientListHTML = `
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">전체 고객사 리스트</h4>
+                    <div class="text-gray-700 bg-gray-100 p-3 rounded-lg text-sm">${c.fullClientList}</div>
+                </div>
+            `;
+        }
+
         modalBody.innerHTML = `
+            ${fullClientListHTML}
             <div>
                 <h4 class="text-lg font-semibold text-red-600 mb-2">고객 문제 (Pain Point)</h4>
                 <div class="text-gray-700 bg-red-50 p-3 rounded-lg">${c.switchReason}</div>
@@ -380,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('modal-hidden');
     }
 
-    window.closeCaseModal = function() {
+    function closeCaseModal() {
         modal.classList.add('modal-hidden');
     }
     
@@ -425,6 +435,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (c.industry === '자동차 신품 판매업') c.industry = '자동차';
         if (c.industry === '공동주택분양 대행업') c.industry = '부동산/대행';
         if (c.industry === '산후도우미/건설/법률 등') c.industry = '기타 복합';
+    });
+    
+    playbookContainer.addEventListener('click', (e) => {
+        const card = e.target.closest('.playbook-card');
+        if (card) {
+            const content = card.querySelector('.playbook-content');
+            const arrow = card.querySelector('.arrow-icon');
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('rotated');
+        }
+    });
+
+    casesSection.addEventListener('click', (e) => {
+        const card = e.target.closest('.case-card');
+        if (card) {
+            const index = card.dataset.index;
+            openCaseModal(index);
+        }
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.closest('#modal-close-btn')) {
+            closeCaseModal();
+        }
     });
 
     renderPlaybook();
