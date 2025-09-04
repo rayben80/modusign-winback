@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모두싸인 윈백(Win-Back) 영업 전략 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The application adopts the structure of the "Win-Back Playbook" for maximum usability. It's a single-page vertical scroll app with four main sections: 1) Competitor Weaknesses (Pain Points), 2) Our Winning Strategy (Playbook), 3) Interactive Case Studies with filtering, and 4) A summary with key data insights and objection handling scripts. This structure transforms a static report into an actionable, explorable tool for sales teams, prioritizing strategic insights over raw data presentation. -->
+    <!-- Visualization & Content Choices: Report Info: Reasons for switching from Modusign. -> Goal: Compare the frequency of different pain points. -> Viz/Presentation Method: Horizontal Bar Chart (Chart.js/Canvas) for clear comparison and label readability. -> Interaction: The chart provides an at-a-glance summary reinforcing the playbook's focus on cost. Report Info: Individual win-back cases. -> Goal: Organize and allow exploration. -> Presentation: Interactive cards grouped by Pain Point, which open a modal for detailed view. -> Justification: This new structure is task-oriented for salespeople, allowing them to quickly find relevant cases based on a prospect's specific problem and drill down for details. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        .arrow-icon { transition: transform 0.3s ease; }
+        .arrow-icon.rotated { transform: rotate(180deg); }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            max-height: 80vh;
+            transition: all 0.3s ease-in-out;
+        }
+        .modal-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .modal-hidden .modal-content {
+            transform: scale(0.95) translateY(10px);
+        }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">윈백(Win-Back) 영업 전략 대시보드</h1>
+            <div class="hidden md:flex space-x-6">
+                <a href="#pain-points" class="text-gray-600 hover:text-blue-500 font-medium">모두싸인 약점 분석</a>
+                <a href="#playbook" class="text-gray-600 hover:text-blue-500 font-medium">승리 공식</a>
+                <a href="#cases" class="text-gray-600 hover:text-blue-500 font-medium">공략 사례</a>
+                <a href="#analysis" class="text-gray-600 hover:text-blue-500 font-medium">핵심 분석</a>
+                <a href="#checklist" class="text-gray-600 hover:text-blue-500 font-medium">최종 점검</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="pain-points" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4">모두싸인 약점 분석: 고객의 3대 Pain Point</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+                성공적인 윈백은 고객의 고통을 정확히 아는 것에서 시작합니다. <br class="hidden sm:block">
+                모두싸인 고객은 아래 3가지 문제에 부딪혔을 때 우리에게 기회가 생깁니다.
+            </p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card p-6 text-center">
+                    <div class="text-5xl mb-4">💰</div>
+                    <h3 class="text-xl font-bold mb-2">예측 불가능한 높은 비용</h3>
+                    <p class="text-gray-600">API 연동비, 불투명한 갱신 비용, 높은 기본 단가 등 비용 문제로 고객의 신뢰를 잃습니다.</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <div class="text-5xl mb-4">⚙️</div>
+                    <h3 class="text-xl font-bold mb-2">서비스와 기능의 한계</h3>
+                    <p class="text-gray-600">서비스 불안정, 필수 기능 부재 등 실제 업무에 필요한 기능이 부족하여 고객이 불편을 겪습니다.</p>
+                </div>
+                <div class="card p-6 text-center">
+                    <div class="text-5xl mb-4">🤝</div>
+                    <h3 class="text-xl font-bold mb-2">적극적인 지원 부재</h3>
+                    <p class="text-gray-600">우리의 신속하고 적극적인 지원 자체가 전환의 핵심 성공 요인이 됩니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="playbook" class="mb-16 scroll-mt-24 bg-slate-50 py-12 -mx-4 md:-mx-8 px-4 md:px-8">
+            <h2 class="text-3xl font-bold text-center mb-4">승리를 위한 3-Step 플레이북</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+                고객의 약점을 파악했다면, 아래 3단계 전략에 따라 승리를 확정 지어야 합니다. <br class="hidden sm:block">
+                각 단계를 클릭하여 상세 내용을 확인하세요.
+            </p>
+            <div id="playbook-container" class="grid md:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <section id="cases" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4">Pain Point별 공략 사례</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+                고객이 겪는 문제 유형에 따라 가장 효과적인 성공 사례를 활용하여 제안의 설득력을 높이십시오. <br class="hidden sm:block">
+                카드를 클릭하면 상세 내용을 볼 수 있습니다.
+            </p>
+            
+            <div class="space-y-12">
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 pb-2 border-b-2 border-red-500 flex items-center"><span class="text-3xl mr-3">💰</span>비용 문제 해결 사례</h3>
+                    <div id="cost-cases" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 pb-2 border-b-2 border-blue-500 flex items-center"><span class="text-3xl mr-3">⚙️</span>서비스/기능 문제 해결 사례</h3>
+                    <div id="feature-cases" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 pb-2 border-b-2 border-orange-500 flex items-center"><span class="text-3xl mr-3">🤝</span>적극적인 지원으로 성공한 사례</h3>
+                    <div id="support-cases" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="analysis" class="mb-16 scroll-mt-24 bg-slate-50 py-12 -mx-4 md:-mx-8 px-4 md:px-8">
+            <h2 class="text-3xl font-bold text-center mb-4">핵심 데이터 분석 및 전략</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+                데이터는 우리의 주장이 사실임을 증명합니다. <br class="hidden sm:block">
+                아래 차트는 모두싸인 고객의 핵심 이탈 사유를 명확히 보여줍니다.
+            </p>
+            <div class="card p-6 mb-12">
+                <h3 class="text-xl font-bold text-center mb-4">모두싸인 고객 이탈 사유 분석</h3>
+                <div class="chart-container">
+                    <canvas id="painPointChart"></canvas>
+                </div>
+            </div>
+            <div class="card p-8">
+                <h3 class="text-xl font-bold mb-6">상황 주도: 반론을 기회로 만드는 대화법</h3>
+                <div class="space-y-6">
+                    <div>
+                        <p class="font-semibold text-lg p-3 bg-red-50 rounded-lg">"모두싸인 UI가 더 직관적인 것 같아요."</p>
+                        <div class="mt-2 border-l-4 border-blue-500 pl-4">
+                            <p class="font-bold">[공감]</p>
+                            <p class="mb-2 text-gray-700">"네, 맞습니다. 많은 분들이 모두싸인 UI가 심플하고 직관적이라고 말씀하십니다."</p>
+                            <p class="font-bold">[핵심 가치 재확인]</p>
+                            <p class="mb-2 text-gray-700">"하지만 UI의 첫인상보다 더 중요한 것은 결국 '안정적인 서비스 운영'과 '문제 발생 시 빠른 해결'입니다."</p>
+                            <p class="font-bold">[증거 제시]</p>
+                            <p class="text-gray-700">"네패스 사례처럼, 저희는 치명적인 문제 없이 안정적인 서비스를 제공합니다. 이것이 저희가 약속드리는 '진짜 편의성'입니다."</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-lg p-3 bg-red-50 rounded-lg">"모두싸인이 고객사가 더 많아서 안정적이지 않나요?"</p>
+                        <div class="mt-2 border-l-4 border-blue-500 pl-4">
+                            <p class="font-bold">[공감]</p>
+                            <p class="mb-2 text-gray-700">"네, 많은 고객사를 확보한 것은 분명 큰 장점입니다."</p>
+                            <p class="font-bold">[핵심 가치 재확인]</p>
+                            <p class="mb-2 text-gray-700">"하지만 '안정성'의 핵심은 회사의 '업력과 재무 건전성'입니다. 단기적인 정책 변경이나 서비스 중단의 위험이 없어야 합니다."</p>
+                            <p class="font-bold">[증거 제시]</p>
+                            <p class="text-gray-700">"이폼사인은 30년 업력의 코스닥 상장사 '포시에스'가 직접 운영합니다. 이것이 가장 확실한 '장기적인 안정성'에 대한 약속입니다."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="checklist" class="scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4">최종 점검: 미팅 전 필승 체크리스트</h2>
+            <p class="text-center text-gray-600 mb-10 max-w-3xl mx-auto">
+                모두싸인 고객과의 상담 전, 아래 체크리스트를 통해 승리를 준비하십시오.
+            </p>
+            <div class="card p-8 max-w-2xl mx-auto">
+                <ul class="space-y-4">
+                    <li class="flex items-start sm:items-center">
+                        <span class="text-2xl mr-4 mt-1 sm:mt-0">🎯</span>
+                        <div>
+                            <h4 class="font-bold">약점 분석</h4>
+                            <p class="text-gray-600">고객의 핵심 Pain Point가 '비용', '기능', '지원' 중 무엇일지 예측했는가?</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start sm:items-center">
+                        <span class="text-2xl mr-4 mt-1 sm:mt-0">⚔️</span>
+                         <div>
+                            <h4 class="font-bold">자료 준비</h4>
+                            <p class="text-gray-600">고객의 사용량에 기반한 'TCO 비교 견적서'를 준비했는가?</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start sm:items-center">
+                        <span class="text-2xl mr-4 mt-1 sm:mt-0">🗺️</span>
+                         <div>
+                            <h4 class="font-bold">전략 수립</h4>
+                            <p class="text-gray-600">우리의 3대 승리 공식(비용, 안정성, 지원)을 어떤 순서로 전달할지 계획했는가?</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start sm:items-center">
+                        <span class="text-2xl mr-4 mt-1 sm:mt-0">📚</span>
+                         <div>
+                            <h4 class="font-bold">사례 숙지</h4>
+                            <p class="text-gray-600">고객 유형에 가장 적합한 성공 사례(코오롱, 네패스 등)를 완벽히 숙지했는가?</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-16 py-6 border-t">
+        <div class="container mx-auto px-6 text-center text-gray-500">
+            <p>&copy; 2025 이폼사인 클라우드사업본부. All Rights Reserved. 본 자료는 내부 교육용입니다.</p>
+        </div>
+    </footer>
+    
+    <div id="case-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop modal-hidden" onclick="closeCaseModal()">
+        <div class="card w-full max-w-2xl modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="modal-client-name" class="text-xl font-bold"></h3>
+                <button onclick="closeCaseModal()" class="text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 space-y-4 overflow-y-auto" style="max-height: 70vh;">
+            </div>
+        </div>
+    </div>
+
+
+<script>
+const caseData = [
+    {
+        rep: '최민',
+        client: '네패스 & 네패스아크',
+        industry: '반도체',
+        painPoints: ['비용', '서비스/기능'],
+        switchReason: '1. 당시 문서 다운로드 불가<br>2. 갱신 기간 중 계정 차단<br>3. 비용에 대한 신뢰를 잃음 (2배 이상 가격으로 갱신 제안)',
+        successPoint: '1. 회사 신뢰성<br>2. 일정한 비용 유지<br>3. 신속한 기술지원',
+        outcome: '초기 2,000건 도입 이후 3,000건씩 매년 갱신(총 11,000건).<br>네패스아크 별도 계약.'
+    },
+    {
+        rep: '김다민',
+        client: '코오롱모터스',
+        industry: '자동차',
+        painPoints: ['비용'],
+        switchReason: '<b>[비용 측면]</b><br>1. API 연동 비용 비교 (연간 약 200만원)<br>2. 건단가 (1,200원 제안 받음)<br><br><b>[API 연동 측면]</b><br>1. 연동 방법의 유사성',
+        successPoint: '1. 비용 절감 효과<br>2. 기능 구현에 대한 확신<br>3. 적극적인 전환 지원 약속',
+        outcome: '신차 계약 관련 2만 건 도입 예정 (총 6.3백만원, 건당 350원).<br>그룹사 내 3개 계열사로 확대 예정.'
+    },
+    {
+        rep: '박진희',
+        client: '한국취약노인지원재단 외 3개사',
+        industry: '비영리/IT',
+        painPoints: ['비용', '서비스/기능'],
+        switchReason: '1. 비용 측면 (API 무상 제공)<br>2. 서비스 불안정<br>3. 기능 (입력규칙, 주소 검색 기능 부재)',
+        successPoint: '1. 비용 절감 (타사 견적 시 단가 할인)<br>2. 문서 사용 기한 없음<br>3. CSV 추출 기능 제공<br>4. 충전형 요금제',
+        outcome: '한국취약노인지원재단: 총 4회 계약 진행.<br>서울시사회복지사협회: 총 2회 계약 진행.'
+    },
+    {
+        rep: '박사랑',
+        client: 'Homecheck 홈체크',
+        industry: '부동산/대행',
+        painPoints: ['비용'],
+        switchReason: '모두싸인 갱신 계약 (단가 1,900원) 금액 부담.<br>모두싸인 최종 단가 720원까지 하락.',
+        successPoint: '- 합리적인 비용 제안<br>- 업체 변경 시 불편함 없게 지원 (교육, 매뉴얼, 템플릿 세팅)<br>- 포시에스 30년 업력 어필',
+        outcome: '10,000건 도입: 450만원 (단가 450원).<br>월 500건 이상 활발히 사용 중. 확장 가능성 높음.'
+    },
+    {
+        rep: '허아영',
+        client: '인트론바이오 외 18개사',
+        industry: '기타 복합',
+        painPoints: ['비용', '지원'],
+        switchReason: '1. 영업자의 적극 지원<br>2. API 무료 제공<br>3. 모두싸인 단가',
+        successPoint: '1. 회사의 안정성<br>2. 비용 측면 (문서별 단가, API 무료)<br>3. 다양한 기능 제공 (CSV)<br>4. 영업자의 빠른 지원',
+        outcome: '다양한 산업군의 다수 고객사 성공적으로 유치.'
+    }
+];
+
+const playbookData = [
+    {
+        step: 1,
+        title: "고객 진단: '비용'으로 시작하라",
+        icon: '🔍',
+        content: `상담 초기, 아래 질문으로 고객의 가장 큰 고통인 '비용' 문제를 정확히 진단합니다.<ul class='list-disc list-inside mt-2'><li>API 연동 비용은 없으셨나요?</li><li>갱신 비용은 어느 정도로 예상하세요?</li><li>멤버/템플릿 추가 시 비용이 발생하나요?</li></ul>`
+    },
+    {
+        step: 2,
+        title: "해결책 제시: 우리의 3대 승리 공식",
+        icon: '💡',
+        content: `진단이 끝났다면, 우리의 3가지 핵심 강점을 제시합니다.<ul class='list-disc list-inside mt-2'><li><b>압도적 비용 절감:</b> 무료 API, 유연한 충전형 요금제</li><li><b>안정성과 신뢰:</b> 포시에스 30년 업력, 코스닥 상장</li><li><b>적극적 지원:</b> 전환 과정 책임 지원, 성공적인 온보딩 약속</li></ul>`
+    },
+    {
+        step: 3,
+        title: "상황 주도: 반론을 기회로",
+        icon: '💬',
+        content: `고객의 예상 반론을 우리가 유리한 방향으로 이끄는 기회로 활용합니다.<ul class='list-disc list-inside mt-2'><li><b>"UI가 더 직관적이다"</b> → 공감 후 '진짜 편의성'(안정성, 지원) 강조</li><li><b>"고객사가 더 많다"</b> → 공감 후 '장기적 안정성'(업력, 재무 건전성) 강조</li></ul>`
+    }
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+    const playbookContainer = document.getElementById('playbook-container');
+    const costCasesContainer = document.getElementById('cost-cases');
+    const featureCasesContainer = document.getElementById('feature-cases');
+    const supportCasesContainer = document.getElementById('support-cases');
+    const modal = document.getElementById('case-modal');
+    const modalContent = modal.querySelector('.modal-content');
+    const modalClientName = document.getElementById('modal-client-name');
+    const modalBody = document.getElementById('modal-body');
+
+    function renderPlaybook() {
+        playbookContainer.innerHTML = playbookData.map(item => `
+            <div class="card p-6 cursor-pointer" onclick="togglePlaybook(this)">
+                <div class="flex items-center justify-between">
+                     <h3 class="text-xl font-bold">${item.step}. ${item.title}</h3>
+                     <div class="flex items-center">
+                        <span class="text-3xl mr-3">${item.icon}</span>
+                        <span class="arrow-icon text-2xl text-gray-400">▼</span>
+                     </div>
+                </div>
+                <div class="playbook-content hidden mt-4 text-gray-600 text-sm leading-relaxed">
+                    <div>${item.content}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.togglePlaybook = function(element) {
+        const content = element.querySelector('.playbook-content');
+        const arrow = element.querySelector('.arrow-icon');
+        content.classList.toggle('hidden');
+        arrow.classList.toggle('rotated');
+    }
+
+    function renderCases() {
+        caseData.forEach((c, index) => {
+            const caseCardHTML = `
+                <div class="card flex flex-col p-5 h-full cursor-pointer" onclick="openCaseModal(${index})">
+                    <h4 class="text-md font-bold text-blue-600 truncate">${c.client}</h4>
+                    <p class="text-sm text-gray-500 mb-3">${c.industry}</p>
+                    <div class="flex-grow text-xs text-gray-600">
+                        <p class="mb-1"><strong class="text-red-500">주요 문제:</strong> ${c.painPoints.join(', ')}</p>
+                        <p><strong class="text-green-600">성공 키워드:</strong> ${c.successPoint.split('<br>')[0].replace(/^-|^\d+\.\s*/, '')}</p>
+                    </div>
+                     <div class="mt-4 pt-3 border-t border-gray-100 text-right">
+                        <span class="text-blue-600 font-semibold text-sm">상세 보기 &rarr;</span>
+                    </div>
+                </div>
+            `;
+
+            if (c.painPoints.includes('비용')) costCasesContainer.innerHTML += caseCardHTML;
+            if (c.painPoints.includes('서비스/기능')) featureCasesContainer.innerHTML += caseCardHTML;
+            if (c.painPoints.includes('지원')) supportCasesContainer.innerHTML += caseCardHTML;
+        });
+    }
+
+    window.openCaseModal = function(index) {
+        const c = caseData[index];
+        modalClientName.textContent = c.client;
+        modalBody.innerHTML = `
+            <div>
+                <h4 class="text-lg font-semibold text-red-600 mb-2">고객 문제 (Pain Point)</h4>
+                <div class="text-gray-700 bg-red-50 p-3 rounded-lg">${c.switchReason}</div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-green-600 mb-2">우리의 해결책 (Solution)</h4>
+                <div class="text-gray-700 bg-green-50 p-3 rounded-lg">${c.successPoint}</div>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">결과 (Outcome)</h4>
+                <div class="text-gray-700 bg-gray-100 p-3 rounded-lg">${c.outcome}</div>
+            </div>
+            <p class="text-sm text-right text-gray-500 mt-4">담당: ${c.rep}</p>
+        `;
+        modal.classList.remove('modal-hidden');
+    }
+
+    window.closeCaseModal = function() {
+        modal.classList.add('modal-hidden');
+    }
+    
+    function createPainPointChart() {
+        const ctx = document.getElementById('painPointChart').getContext('2d');
+        const painPointCounts = caseData.reduce((acc, c) => {
+            c.painPoints.forEach(p => { acc[p] = (acc[p] || 0) + 1; });
+            return acc;
+        }, {});
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(painPointCounts),
+                datasets: [{
+                    label: '사례 수',
+                    data: Object.values(painPointCounts),
+                    backgroundColor: ['rgba(239, 68, 68, 0.6)', 'rgba(59, 130, 246, 0.6)', 'rgba(249, 115, 22, 0.6)'],
+                    borderColor: ['rgba(239, 68, 68, 1)', 'rgba(59, 130, 246, 1)', 'rgba(249, 115, 22, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) { return ` ${context.dataset.label}: ${context.raw} 건`; }
+                        }
+                    }
+                },
+                scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+    
+    caseData.forEach(c => {
+        if (c.industry === '반도체부품 제조') c.industry = '반도체';
+        if (c.industry === '자동차 신품 판매업') c.industry = '자동차';
+        if (c.industry === '공동주택분양 대행업') c.industry = '부동산/대행';
+        if (c.industry === '산후도우미/건설/법률 등') c.industry = '기타 복합';
+    });
+
+    renderPlaybook();
+    renderCases();
+    createPainPointChart();
+});
+</script>
+
+</body>
+</html>
+
